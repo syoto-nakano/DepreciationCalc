@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>入居年数計算</title>
+    <title>原状回復の減価償却計算</title>
     <style>
         /* 全体のページスタイル */
         body {
@@ -14,17 +14,17 @@
         }
 
         /* 見出しのスタイル */
-        h1{
+        h1 {
             color: #333;
             font-size: 35px;
         }
 
         /* 入力エリアと結果表示をまとめている部分 */
-        .container{
+        .container {
             background-color: #fff;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             display: inline-block;
         }
 
@@ -37,7 +37,7 @@
         }
 
         /* 入力フィールドのデザイン */
-        input{
+        input {
             padding: 10px;
             width: 250px;
             font-size: 16px;
@@ -73,123 +73,123 @@
         }
 
         /* 結果表示のスタイル */
-        p{
+        P {
             font-size: 30px;
             font-weight: bold;
             margin-top: 20px;
             color: #333;
-            white-space: pre-line;
+            white-space: pre-line;;
         }
 
         /* モバイル向けのサイズ調整 */
-        @media screen and(max-width:600px){
-            body{
+        @media screen and (max-width:600px) {
+            body {
                 padding: 20px;
             }
-
-            .container{
+            .container {
                 padding: 20px;
             }
-
-            button{
+            button {
                 font-size: 18px;
             }
-
             input {
                 font-size: 18px;
                 width: 220px;
             }
-        } 
+        }
     </style>
 </head>
-
 <body>
     <h1>入居年数計算ツール</h1>
-
     <div class="container">
-        <!-- 入居開始日の入力欄 -->
+        <!-- 入居開始日と入居終了日の入力欄 -->
         <label for="startDate">入居開始日：</label>
         <input type="date" id="startDate">
-
-        <!-- 入居終了日の入力欄 -->
         <label for="endDate">入居終了日：</label>
         <input type="date" id="endDate">
 
-        <!-- 計算ボタン -->
-        <button onclick="calculateYears()">計算</button>
-
-        <!-- リセットボタン -->
-        <button class="reset-btn" onclick="resetForm()">リセット</button>
+        <!-- ボタン -->
+        <button id="calculateBtn">計算</button>
+        <button id="resetBtn" class="reset-btn">リセット</button>
 
         <!-- 結果表示エリア -->
         <p id="result"></p>
     </div>
+
     <script>
-        function calculateYears(){
-            // 入居開始日と入居終了日の入力値を取得
-            let startDateInput = document.getElementById("startDate").value;
-            let endDateInput = document.getElementById("endDate").value;
+        (function() {
+            "use strict";
 
-            // 入力がどちらか片方でも空欄ならエラーメッセージを表示
-            if (!startDateInput || !endDateInput) {
-                document.getElementById("result").innerText = "入居開始日と入居終了日を両方入力してください。";
-                return;
+            // DOM要素の取得
+            const startDateEl = document.getElementById("startDate");
+            const endDateEl = document.getElementById("endDate");
+            const resultEl = document.getElementById("result");
+            const calculateBtn = document.getElementById("calculateBtn");
+            const resetBtn = document.getElementById("resetBtn");
+
+            // 結果表示用関数
+            function displayResult(message) {
+                resultEl.innerText = message;
             }
 
-            // 入居開始日と入居終了日をDate型に変換
-            let startDate = new Date(startDateInput);
-            let endDate = new Date(endDateInput);
-
-            // 入居終了日が入居開始日より前の場合はエラー表示
-            if (endDate < startDate) {
-                document.getElementById("result").innerText = "入居終了日は入居開始日より後の日付を選択してください。";
-                return;
+            // 入居月数から割合を計算する関数
+            function computePercentage(totalMonths) {
+                if (totalMonths >= 72) {
+                    return 100;
+                } else if (totalMonths >= 60) {
+                    const extraMonths = totalMonths -60;
+                    const monthlyIncrease = (100 - 16.6) / 12;
+                    return 16.6 + extraMonths * monthlyIncrease;
+                } else {
+                    const monthlyIncrease = (100 - 16.6) / 60;
+                    return 100 - totalMonths * monthlyIncrease;
+                }
             }
 
-            // 総入居月数を計算
-            let totalMonths = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
-            let years = Math.floor(totalMonths / 12); // 入居年数（切り捨て）
-            let months = totalMonths % 12; // 余った月数
+            // 入居年数と割合を計算する関数
+            function calculateYears() {
+                const startDateValue = startDateEl.value;
+                const endDateValue = endDateEl.value;
 
-            let percentage;
-            /*
-                【仕様】
-                ・0年0ヶ月　→　100%
-                ・1年0ヶ月　→　83.3%
-                ・2年0ヶ月　→　66.6%
-                ・3年0ヶ月　→　50.0%
-                ・4年0ヶ月　→　33.3%
-                ・5年0ヶ月　→　16.6%
-                ・6年0ヶ月　→　100%
-            */
-            
-            if (totalMonths >= 72){
-                // 6年0ヶ月以上のときは常に100%
-                percentage = 100;
-            }else if(totalMonths >= 60) {
-                // 5年～6年：60ヶ月で16.6%、72ヶ月で100%になるように増加
-                let extraMonths = totalMonths - 60;
-                let monthlyIncrease = (100 - 16.6) / 12; // 約6.95
-                percentage = 16.6 + extraMonths * monthlyIncrease;
-            } else {
-                // 0ヶ月～60ヶ月：100%から1ヶ月あたり約1.39ずつ減少
-                let monthlyDecrease = (100 - 16.6) / 60; // 約1.39
-                percentage = 100 - totalMonths * monthlyDecrease;
+                // 入力値のチェック
+                if (!startDateValue || !endDateValue) {
+                    displayResult("入居開始日と入居終了日を両方入力してください。");
+                    return;
+                }
+
+                const startDate = new Date(startDateValue);
+                const endDate = new Date(endDateValue);
+
+                if (endDate < startDate) {
+                    displayResult("入居終了日は入居開始日より後の日付を選択してください。");
+                    return;
+                }
+
+                // 総入居数の計算
+                const totalMonths =
+                    (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+                    (endDate.getMonth() - startDate.getMonth());
+                const years = Math.floor(totalMonths / 12);
+                const months = totalMonths % 12;
+
+                let percentage = computePercentage(totalMonths);
+                // 小数点第1位で丸める
+                percentage = Math.round(percentage * 10) / 10;
+
+                displayResult(`入居年数：${years}年${months}ヶ月\n割合：${percentage}%`);
             }
 
-            // 小数点第1位で丸める
-            percentage = Math.round(percentage * 10) / 10;
+            // リセット処理
+            function resetForm() {
+                startDateEl.value = "";
+                endDateEl.value = "";
+                displayResult("");
+            }
 
-            // 結果を画面に表示
-            document.getElementById("result").innerText = `入居年数：${years}年${months}ヶ月\n割合:${percentage}%`;
-        }
-
-        // リセット処理
-        function resetForm() {
-            document.getElementById("startDate").value = "";
-            document.getElementById("endDate").value = "";
-            document.getElementById("result").innerText = "";
-        }
+            // イベントリスナーの登録
+            calculateBtn.addEventListener("click", calculateYears);
+            resetBtn.addEventListener("click", resetForm);
+        })();
     </script>
 </body>
 </html>
